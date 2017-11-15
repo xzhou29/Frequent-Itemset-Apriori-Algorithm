@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <sstream>
 #include <iomanip>
+#include <set>
 
 using namespace std;
 
@@ -22,6 +23,8 @@ map<int, string> numberToString; // translation of ineteger ID to transaction st
 map<vector<int>, int> C; //candidate itemsets
 map<vector<int>, int> F; //frequent itemsets
 map<int, vector<int> > D; // database
+set <int> vocab;
+map<int, set<int> > invIndex;
 
 void output_stringToNumber(); //for testing only
 void output_numberToString(); //for testing only
@@ -38,6 +41,8 @@ void outputResult(map<vector<int>, int>, bool);
 void scan_data();
 void prune();
 bool isPreviousValueSame(vector<int>, vector<int>);
+void list();
+void scan();
 
 int main(int argc, char *argv[])
 {
@@ -62,6 +67,7 @@ int main(int argc, char *argv[])
 	F.clear();
 	cout << "Getting the data now..." << endl;
 	get_data();
+	list();
 	//output_data();
 	int loop = 1;
 	bool isFirstOutput = true;
@@ -89,8 +95,8 @@ int main(int argc, char *argv[])
 			if (C.size() == 0) break;
 
 			cout << "Scanning the database now..." << endl;
-			scan_data();
-
+			//scan_data();
+			scan();
 			cout <<  "Generating Frequent itemsets now..." << endl;
 			generate_F();
 
@@ -108,6 +114,9 @@ int main(int argc, char *argv[])
 	float diff((float)t2 - (float)t1);
 	cout << "Clock time: "<< diff << endl;
 	cout << "Minimum Support: " << MIN_SUP << " ------ K: "  << k << endl;
+
+	cout << "1 : " << stringToNumber["A231WM2Z2JL0U3"] << endl;
+	cout << "1 : " << stringToNumber["A5JLAU2ARJ0BO"] << endl;
 	return 0;
 }
 
@@ -150,7 +159,7 @@ void transactionsDB() {
 				count++;
 				stringToNumber[item] = count;
 				numberToString[count] = item;
-
+				vocab.insert(count);
 				newTransactions << count << " ";
 			}
 			else {
@@ -166,6 +175,7 @@ void transactionsDB() {
 				count++;
 				stringToNumber[item] = count;
 				numberToString[count] = item;
+				vocab.insert(count);
 				newTransactions << count << " -1\n";
 			}
 			else {
@@ -179,12 +189,50 @@ void transactionsDB() {
 			item += str;
 		}
 	}
+	//for (int s: vocab) {
+	//	cout << s << endl;
+	//}
+
 	transactions.close();
 	newTransactions.close();
 }
 
+void list() {
+	for (int s : vocab) {
+		invIndex[s];
+	}
+	vector<int> a;
+	//set<int> location;
+	for (map<int, vector<int> >::iterator(ii) = (D).begin(); (ii) != (D).end(); ++(ii)) {
+		a.clear();
+		a = ii->second;
+		int aSize = a.size();
+		//cout << location << endl;
+		for (int j = 0; j < aSize; j++) {
+			//Get the actual word in position j of doc i
+			int w = a[j];
+		    invIndex[w].insert(ii->first);
+		}
+	}
+	//set<int> b;
+	//location = 0;
+	//for (map<int, set<int> >::iterator(ii) = (invIndex).begin(); (ii) != (invIndex).end(); ++(ii)) {
+	//	b.clear();
+	//	b = ii->second;
+	//	location++;
+	//	cout << "Doc ID: ";
+	//	for (set<int>::iterator i = b.begin(); i != b.end(); i++) {
+	//		int element = *i;
+	//		cout << element << " ";
+	//	}
+
+	//	cout << "\n";
+	//}
+}
+
 void get_data()
 {
+
 	ifstream fin;
 	fin.open("newTransactions.txt");
 	if (!fin)
@@ -379,7 +427,6 @@ void prune()
 			}
 		}
 	}
-
 	map<vector<int>, int> temp;
 	temp.clear();
 	MAP_LOOP_1(ii, C)
@@ -394,42 +441,61 @@ void prune()
 	temp.clear();
 }
 
-void scan_data() {
-	int scanCount = 0;
-	int total = D.size();
-	vector<int> a, b;
-	for (map<int, vector<int> >::iterator(iii) = (D).begin(); (iii) != (D).end(); ++(iii)) // database
-	{
-		scanCount++;
-		cout << "scanning: "<< scanCount << "/"<< total << endl;
-		a.clear();
-		a = iii->second; 
-		for (map<vector<int>, int>::iterator(ii) = (C).begin(); (ii) != (C).end(); ++(ii)) //candidate keys
-		{
-			b.clear();
-			b = ii->first; // candidate keys
-			int true_count = 0;
-			if (b.size() <= a.size())
-			{
-				for (int i = 0; i < b.size(); ++i)
-				{
-					for (int j = 0; j < a.size(); ++j)
-					{
-						if (b[i] == a[j])
-						{
-							true_count++;
-							break;
-						}
-					}
-				}
-				if (true_count == b.size())
-				{
-					ii->second++;
-				}
+vector<int> compare(vector<int> a) {
+	vector<int> temResult;
+
+	map<int, vector<int> > inter;
+	vector<int> tempVec;
+
+	for (int i = 0; i < a.size(); ++i) { 
+		set<int> tempSet = invIndex[a[i]];
+		tempVec.clear();
+		tempVec.insert(tempVec.cend(), tempSet.cbegin(), tempSet.cend());
+		inter[i] = tempVec;
+	}
+	vector<int> aaa, bbb;
+	aaa = inter[0];
+	for (int c = 1; c < a.size(); ++c) {
+		bbb = inter[c];
+		int i = 0, j = 0;
+
+		while (i != aaa.size() && j != bbb.size()) {
+			if (aaa[i] == bbb[j]) {
+				temResult.push_back(aaa[i]);
+				i++;
+				j++;
+			}
+			else if (aaa[i] < bbb[j]) {
+				i++;
+			}
+			else {
+				j++;
 			}
 		}
+		aaa = temResult;
+		temResult.clear();
+	}
+	return aaa;
+}
+void scan() {
+	vector<int> a, b;
+	vector<int> result;
+	int location = 1;
+	int foundCount = 0;
+	for (map<vector<int>, int>::iterator(ii) = (C).begin(); (ii) != (C).end(); ++(ii)) //candidate keys
+	{
+		a.clear();
+		a = ii->first;
+		result = compare(a);
+		if (result.size() >= MIN_SUP) {
+			cout << "found: " << foundCount << endl;
+			foundCount++;
+			ii->second = result.size();
+		}
+		location++;
 	}
 }
+
 
 void generate_F()
 {
