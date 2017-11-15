@@ -1,7 +1,6 @@
 # Frequent-Itemset-Apriori-Algorithm
 
-Language: C++. g++ 5.4.0
-Unix / Linux Environment .
+C++. g++ 5.4.0
 
 1. Compile the program executable. "g++ std=c++11 dm.cpp" 
 
